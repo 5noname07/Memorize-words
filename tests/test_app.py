@@ -185,6 +185,25 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.alice.post('/api/login', json={'username': 'alice', 'password': self.password}).status_code, 401)
         self.assertEqual(self.alice.post('/api/login', json={'username': 'alice', 'password': new_password}).status_code, 200)
 
+    def test_automatic_local_secret_and_existing_session_survive_restart(self):
+        database = str(Path(self.temp.name) / 'automatic' / 'words.sqlite3')
+        config = {'TESTING': True, 'DATABASE': database, 'SECRET_KEY': None}
+        first_app = create_app(config)
+        key_path = Path(database).parent / 'secret.key'
+        secret = key_path.read_text()
+        self.assertGreaterEqual(len(secret), 32)
+        password = secrets.token_urlsafe(24)
+        result = first_app.test_cli_runner().invoke(args=['create-user', 'test'], input=f'{password}\n{password}\n')
+        self.assertEqual(result.exit_code, 0)
+        first_client = first_app.test_client()
+        self.assertEqual(first_client.post('/api/login', json={'username': 'test', 'password': password}).status_code, 200)
+        token = first_client.get_cookie('words_session').value
+        second_app = create_app(config)
+        self.assertEqual(key_path.read_text(), secret)
+        second_client = second_app.test_client()
+        second_client.set_cookie('words_session', token)
+        self.assertEqual(second_client.get('/api/me').status_code, 200)
+
     def test_validation_rate_limit_and_security_headers(self):
         for value in (-1, 1001, 'NaN', 'Infinity', True, None):
             self.assertEqual(self.send('batches', {'name': 'x', 'study_weight': value}).status_code, 400)

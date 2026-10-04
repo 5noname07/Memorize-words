@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#176b59">
+  <title>词间 · 英语单词练习</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <div id="notice" role="status" aria-live="polite" hidden></div>
+  <section id="login-page" class="login-page" hidden>
+    <div class="login-card">
+      <div class="brand-icon">Aa</div>
+      <p class="eyebrow">每天一点，慢慢记住</p>
+      <h1>词间</h1><p class="muted">登录，继续你的英语单词练习。</p>
+      <form id="login-form">
+        <label>用户名<input name="username" autocomplete="username" required maxlength="50"></label>
+        <label>密码<input name="password" type="password" autocomplete="current-password" required maxlength="256"></label>
+        <button type="submit" class="primary wide">登录</button>
+      </form>
+      <p class="fine">账户由管理员创建。你的单词和学习记录仅自己可见。</p>
+    </div>
+  </section>
+  <div id="app-page" class="shell" hidden>
+    <header class="topbar"><a class="brand" href="/">Aa <span>词间</span></a><div class="account"><span id="username"></span><button id="logout" class="quiet">退出</button></div></header>
+    <nav class="tabs" aria-label="主导航">
+      <button data-view="study" class="active">学习</button><button data-view="batches">单词批次</button><button data-view="mistakes">错题集</button><button data-view="history">学习记录</button>
+    </nav>
+    <main>
+      <section id="view-study" class="view">
+        <div class="page-heading"><div><p class="eyebrow">LEARN A LITTLE EVERY DAY</p><h1>今天，也记住几个词</h1><p class="muted">看中文释义，拼写英文单词。</p></div><span class="pill">正常学习</span></div>
+        <div class="practice-layout">
+          <article class="practice-card" id="study-card">
+            <div class="practice-empty"><div class="card-mark">Aa</div><h2>从一个单词开始</h2><p class="muted">先在「单词批次」中添加单词，按批次权重随机练习。</p><button class="primary" id="start-study">开始学习</button></div>
+          </article>
+          <aside class="panel"><h2>学习批次权重</h2><p class="fine">权重越大，该批次越常出现。设为 0 可暂停该批次；批次内单词等概率抽取。</p><div id="study-weights"></div><p class="fine">正常学习从单词库抽题，不额外混入错题集。</p></aside>
+        </div>
+      </section>
+      <section id="view-batches" class="view" hidden>
+        <div class="page-heading"><div><p class="eyebrow">YOUR WORD COLLECTION</p><h1>单词批次</h1><p class="muted">按课文、章节或日期整理你的词库。</p></div><button id="new-batch" class="primary">＋ 新建批次</button></div>
+        <div id="batch-list" class="batch-grid"></div>
+        <section id="word-panel" class="panel" hidden>
+          <div class="section-heading"><div><h2 id="word-heading"></h2><p class="fine">单词移动后，首次导入的批次信息仍会保留。</p></div><div class="actions"><button id="import-words">批量导入</button><button id="new-word" class="primary">＋ 添加单词</button></div></div>
+          <label class="search-label">查询单词<input id="word-search" type="search" placeholder="搜索英文或中文释义"></label>
+          <div id="word-list" class="word-list"></div>
+        </section>
+      </section>
+      <section id="view-mistakes" class="view" hidden>
+        <div class="page-heading"><div><p class="eyebrow">ANOTHER CHANCE TO REMEMBER</p><h1>错题集</h1><p class="muted">单独练习答错的单词，按首次导入批次抽题。</p></div><span class="pill warm">独立练习</span></div>
+        <div class="practice-layout"><article class="practice-card" id="mistakes-card"><div class="practice-empty"><div class="card-mark">↻</div><h2>把没记牢的再练一次</h2><p class="muted">答对后仍保留在错题集，记牢后可手动移除。</p><button class="primary" id="start-mistakes">开始错题练习</button></div></article><aside class="panel"><h2>错题批次权重</h2><p class="fine">按原始批次独立设置，不影响正常学习。已删除批次的错题仍可练习。</p><div id="mistake-weights"></div></aside></div>
+        <section class="panel"><div class="section-heading"><h2>待复习的单词 <span id="mistake-count" class="count"></span></h2><label>原始批次<select id="mistake-filter"><option value="">全部批次</option></select></label></div><div id="mistake-list" class="word-list"></div></section>
+      </section>
+      <section id="view-history" class="view" hidden>
+        <div class="page-heading"><div><p class="eyebrow">SMALL STEPS ADD UP</p><h1>学习记录</h1><p class="muted">每一次练习都保存在你的账户中。</p></div><a class="button" href="/api/export" download>导出个人数据</a></div>
+        <div id="stats" class="stats"></div><section class="panel"><h2>最近 100 次答题</h2><div id="history-list" class="word-list"></div></section>
+      </section>
+    </main>
+    <footer>词间 · 慢慢学，牢牢记</footer>
+  </div>
+  <dialog id="editor"><form id="editor-form"><div class="section-heading"><h2 id="editor-title"></h2><button type="button" id="close-editor" class="quiet" aria-label="关闭">✕</button></div><div id="editor-fields"></div><div class="dialog-actions"><button type="button" id="cancel-editor">取消</button><button type="submit" class="primary">保存</button></div></form></dialog>
+  <dialog id="confirm-dialog"><h2>确认删除</h2><p id="confirm-message"></p><div class="dialog-actions"><button id="confirm-cancel">取消</button><button id="confirm-yes" class="danger">确认</button></div></dialog>
+</body>
+</html>
